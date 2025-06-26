@@ -41,7 +41,7 @@ USER_INPUTS = [
 async def main() -> None:
     """Main function to demonstrate Azure AI Agent usage with step-by-step validation."""
     try:
-        settings = AzureAIAgentSettings()
+        ai_agent_settings = AzureAIAgentSettings()
 
         async with (
             DefaultAzureCredential() as creds,
@@ -49,7 +49,7 @@ async def main() -> None:
         ):
             # 5. Create an agent on the Azure AI agent service
             agent_definition = await client.agents.create_agent(
-                model=settings.model_deployment_name,
+                model=ai_agent_settings.model_deployment_name,
                 name="Assistant",
                 description="A helpful assistant that answers user questions.",
                 instructions="Answer the user's questions in a helpful and friendly manner.",

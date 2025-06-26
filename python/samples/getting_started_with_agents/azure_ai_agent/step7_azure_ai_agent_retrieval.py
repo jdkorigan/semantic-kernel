@@ -1,4 +1,7 @@
 # Copyright (c) Microsoft. All rights reserved.
+import os
+script_dir = os.path.dirname(os.path.abspath(__file__))
+os.chdir(script_dir)
 
 import asyncio
 
@@ -29,7 +32,7 @@ async def main() -> None:
         # Replace the "your-agent-id" with the actual agent ID
         # you want to use.
         agent_definition = await client.agents.get_agent(
-            agent_id="your-agent-id",
+            agent_id="asst_mMxho9eBhbrpnpV0futlMsTk",
         )
 
         # 2. Create a Semantic Kernel agent for the Azure AI agent

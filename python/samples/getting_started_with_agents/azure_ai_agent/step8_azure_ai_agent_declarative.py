@@ -1,4 +1,7 @@
 # Copyright (c) Microsoft. All rights reserved.
+import os
+script_dir = os.path.dirname(os.path.abspath(__file__))
+os.chdir(script_dir)
 
 import asyncio
 from typing import Annotated
@@ -59,7 +62,7 @@ tools:
 
 
 async def main() -> None:
-    settings = AzureAIAgentSettings()
+    ai_agent_settings = AzureAIAgentSettings()
     async with (
         DefaultAzureCredential() as creds,
         AzureAIAgent.create_client(credential=creds) as client,
@@ -73,7 +76,7 @@ async def main() -> None:
         agent: AzureAIAgent = await AgentRegistry.create_from_yaml(
             SPEC,
             kernel=kernel,
-            settings=settings,
+            settings=ai_agent_settings,
             client=client,
         )
 

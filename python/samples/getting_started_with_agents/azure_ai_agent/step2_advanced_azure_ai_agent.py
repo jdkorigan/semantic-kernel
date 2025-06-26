@@ -47,7 +47,7 @@ USER_INPUTS = [
 
 async def main() -> None:
 
-    settings = AzureAIAgentSettings()
+    ai_agent_settings = AzureAIAgentSettings()
 
     async with (
         DefaultAzureCredential() as creds,
@@ -55,7 +55,7 @@ async def main() -> None:
     ):
         # 1. Create an agent on the Azure AI agent service
         agent_definition = await client.agents.create_agent(
-            model=settings.model_deployment_name,
+            model=ai_agent_settings.model_deployment_name,
             name="Host",
             instructions="Answer questions about the menu.",
         )
