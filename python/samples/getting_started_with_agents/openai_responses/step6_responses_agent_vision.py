@@ -8,20 +8,19 @@ os.chdir(script_dir)
 
 from dotenv import load_dotenv
 
-from semantic_kernel.agents import OpenAIResponsesAgent
+from semantic_kernel.connectors.ai.open_ai import AzureChatCompletion
+from semantic_kernel.connectors.ai.open_ai.prompt_execution_settings.azure_chat_prompt_execution_settings import AzureChatPromptExecutionSettings
 from semantic_kernel.contents import ChatMessageContent
 from semantic_kernel.contents.image_content import ImageContent
 from semantic_kernel.contents.text_content import TextContent
 from semantic_kernel.contents.utils.author_role import AuthorRole
+from semantic_kernel.contents.chat_history import ChatHistory
 
 """
-The following sample demonstrates how to create an OpenAI Responses Agent.
-The sample shows how to have the agent answer questions about the provided images.
+The following sample demonstrates how to create an Azure OpenAI Chat Completion service for vision tasks.
+The sample shows how to have the service answer questions about the provided images.
 
-The interaction with the agent is via the `get_response` method, which sends a
-user input to the agent and receives a response from the agent. The conversation
-history is maintained by the chat history. Therefore, client code does need to 
-maintain the conversation history if conversation context is desired.
+This version uses the Chat Completion API which supports vision capabilities with GPT-4o.
 """
 
 
@@ -30,26 +29,18 @@ async def main():
 
     deployment_name = os.getenv("AZURE_OPENAI_DEPLOYMENT_NAME")
 
-    # 1. Create the client using OpenAI resources and configuration
-    client = OpenAIResponsesAgent.create_client(ai_model_id=deployment_name)
+    # 1. Create the Azure OpenAI chat completion service
+    chat_service = AzureChatCompletion(
+        service_id="azure_chat",
+        deployment_name=deployment_name,
+        endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
+        api_key=os.getenv("AZURE_OPENAI_API_KEY"),
+    )
 
     # 2. Define a file path for an image that will be used in the conversation
     file_path = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))), "resources", "cat.jpg")
 
-    # 3. Create a Semantic Kernel agent for the OpenAI Responses API
-    agent = OpenAIResponsesAgent(
-        ai_model_id=deployment_name,
-        client=client,
-        instructions="Answer questions about the provided images.",
-        name="VisionAgent",
-    )
-
-    # 3. Create a thread for the agent
-    # If no thread is provided, a new thread will be
-    # created and returned with the initial response
-    thread = None
-
-    # 4. Define a list of user messages that include text and image content for the vision task
+    # 3. Define a list of user messages that include text and image content for the vision task
     user_messages = [
         ChatMessageContent(
             role=AuthorRole.USER,
@@ -60,7 +51,7 @@ async def main():
                 ),
             ],
         ),
-        ChatMessageContent(
+        ChatMessageContent( 
             role=AuthorRole.USER,
             items=[
                 TextContent(text="What is the main color in this image?"),
@@ -76,23 +67,46 @@ async def main():
         ),
     ]
 
-    for user_input in user_messages:
+    # 4. Process each message
+    for i, user_input in enumerate(user_messages):
         print(f"# User: {str(user_input)}")  # type: ignore
-        # 5. Invoke the agent with the current chat history and print the response
-        response = await agent.get_response(messages=user_input, thread=thread)
-        print(f"# Agent: {response.content}\n")
-        thread = response.thread
+        
+        try:
+            # 5. Create a chat history with the user message
+            chat_history = ChatHistory()
+            chat_history.add_message(user_input)
+            
+            # 6. Create settings for the chat completion
+            settings = AzureChatPromptExecutionSettings(
+                ai_model_id=deployment_name,
+                temperature=0.7,
+                max_tokens=1000
+            )
+            
+            # 7. Get the response from the chat service
+            response = await chat_service.get_chat_message_contents(chat_history, settings=settings)
+            
+            if response and len(response) > 0:
+                print(f"# Assistant: {response[0].content}\n")
+            else:
+                print("No response received\n")
+                
+        except Exception as e:
+            print(f"Error processing message {i+1}: {e}")
+            print("Continuing with next message...")
+            continue
+
     """
     You should see output similar to the following:
 
     # User: Describe this image.
-    # Agent: The image depicts a bustling scene of Times Square in New York City...
+    # Assistant: The image depicts a bustling scene of Times Square in New York City...
 
     # User: What is the main color in this image?
-    # Agent: The main color in the image is blue.
+    # Assistant: The main color in the image is blue.
 
     # User: Is there an animal in this image?
-    # Agent: Yes, there is a cat in the image.
+    # Assistant: Yes, there is a cat in the image.
      """
 
 
