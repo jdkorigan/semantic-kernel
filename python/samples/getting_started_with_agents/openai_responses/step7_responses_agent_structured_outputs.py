@@ -1,5 +1,11 @@
 # Copyright (c) Microsoft. All rights reserved.
 
+import os
+script_dir = os.path.dirname(os.path.abspath(__file__))
+os.chdir(script_dir)
+
+from dotenv import load_dotenv
+
 import asyncio
 import json
 
@@ -32,13 +38,17 @@ class Reasoning(BaseModel):
 
 
 async def main():
+    load_dotenv()
+
+    deployment_name = os.getenv("AZURE_OPENAI_DEPLOYMENT_NAME")
+
     # 1. Create the client using OpenAI resources and configuration
     # Note: the Azure OpenAI Responses API does not yet support structured outputs.
-    client, model = OpenAIResponsesAgent.setup_resources()
+    client = OpenAIResponsesAgent.create_client(ai_model_id=deployment_name)
 
     # 2. Create a Semantic Kernel agent for the OpenAI Responses API
     agent = OpenAIResponsesAgent(
-        ai_model_id=model,
+        ai_model_id=deployment_name,
         client=client,
         instructions="Answer the user's questions.",
         name="StructuredOutputsAgent",

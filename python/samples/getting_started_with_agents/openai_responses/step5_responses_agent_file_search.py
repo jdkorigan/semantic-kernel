@@ -1,6 +1,12 @@
 # Copyright (c) Microsoft. All rights reserved.
+
 import asyncio
 import os
+import os
+script_dir = os.path.dirname(os.path.abspath(__file__))
+os.chdir(script_dir)
+
+from dotenv import load_dotenv
 
 from semantic_kernel.agents import AzureResponsesAgent
 
@@ -26,8 +32,12 @@ USER_INPUTS = [
 
 
 async def main():
+    load_dotenv()
+
+    deployment_name = os.getenv("AZURE_OPENAI_DEPLOYMENT_NAME")
+
     # 1. Create the client using Azure OpenAI resources and configuration
-    client, model = AzureResponsesAgent.setup_resources()
+    client = AzureResponsesAgent.create_client(deployment_name=deployment_name)
 
     pdf_file_path = os.path.join(
         os.path.dirname(os.path.dirname(os.path.realpath(__file__))), "resources", "employees.pdf"
@@ -45,7 +55,7 @@ async def main():
 
     # 2. Create a Semantic Kernel agent for the OpenAI Responses API
     agent = AzureResponsesAgent(
-        ai_model_id=model,
+        ai_model_id=deployment_name,
         client=client,
         instructions="Find answers to the user's questions in the provided file.",
         name="FileSearch",

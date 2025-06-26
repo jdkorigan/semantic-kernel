@@ -1,5 +1,11 @@
 # Copyright (c) Microsoft. All rights reserved.
+
 import asyncio
+import os
+script_dir = os.path.dirname(os.path.abspath(__file__))
+os.chdir(script_dir)
+
+from dotenv import load_dotenv
 
 from semantic_kernel.agents import OpenAIResponsesAgent
 
@@ -23,15 +29,19 @@ USER_INPUTS = [
 
 
 async def main():
+    load_dotenv()
+
+    deployment_name = os.getenv("AZURE_OPENAI_DEPLOYMENT_NAME")
+
     # 1. Create the client using OpenAI resources and configuration
     # Note: the Azure OpenAI Responses API does not yet support the web search tool.
-    client, model = OpenAIResponsesAgent.setup_resources()
+    client = OpenAIResponsesAgent.create_client(ai_model_id=deployment_name)
 
     web_search_tool = OpenAIResponsesAgent.configure_web_search_tool()
 
     # 2. Create a Semantic Kernel agent for the OpenAI Responses API
     agent = OpenAIResponsesAgent(
-        ai_model_id=model,
+        ai_model_id=deployment_name,
         client=client,
         instructions="Answer questions from the user about performing web searches for news.",
         name="NewsSearcher",

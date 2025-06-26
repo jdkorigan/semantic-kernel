@@ -1,5 +1,11 @@
 # Copyright (c) Microsoft. All rights reserved.
+
 import asyncio
+import os
+script_dir = os.path.dirname(os.path.abspath(__file__))
+os.chdir(script_dir)
+
+from dotenv import load_dotenv
 
 from semantic_kernel.agents import AzureResponsesAgent
 
@@ -27,12 +33,16 @@ USER_INPUTS = [
 
 
 async def main():
+    load_dotenv()
+
+    deployment_name = os.getenv("AZURE_OPENAI_DEPLOYMENT_NAME")
+
     # 1. Create the client using Azure OpenAI resources and configuration
-    client, model = AzureResponsesAgent.setup_resources()
+    client = AzureResponsesAgent.create_client(deployment_name=deployment_name)
 
     # 2. Create a Semantic Kernel agent for the OpenAI Responses API
     agent = AzureResponsesAgent(
-        ai_model_id=model,
+        ai_model_id=deployment_name,
         client=client,
         instructions="Answer questions about the world in one sentence.",
         name="Expert",
