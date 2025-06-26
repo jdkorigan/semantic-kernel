@@ -44,7 +44,7 @@ You will create a **Native Client Application Identity** (no client secret requi
 3. Go to **App registrations** → **New registration**
 4. Fill out:
    - **Name**: Any name you like
-   - **Supported account types**: `Accounts in this organization directory only`
+   - **Supported acount types**: `Accounts in this organization directory only`
    - **Redirect URI**:  
      - Platform: `Public client/native (mobile & desktop)`
      - URI: `http://localhost`
