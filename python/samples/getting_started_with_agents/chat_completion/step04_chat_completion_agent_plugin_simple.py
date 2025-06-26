@@ -1,4 +1,9 @@
 # Copyright (c) Microsoft. All rights reserved.
+import os
+script_dir = os.path.dirname(os.path.abspath(__file__))
+os.chdir(script_dir)
+
+from dotenv import load_dotenv
 
 import asyncio
 from typing import Annotated
@@ -44,9 +49,13 @@ USER_INPUTS = [
 
 
 async def main():
+    load_dotenv()
+
+    deployment_name = os.getenv("AZURE_OPENAI_DEPLOYMENT_NAME")
+
     # 1. Create the agent
     agent = ChatCompletionAgent(
-        service=AzureChatCompletion(),
+        service=AzureChatCompletion(deployment_name=deployment_name),
         name="Host",
         instructions="Answer questions about the menu.",
         plugins=[MenuPlugin()],

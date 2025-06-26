@@ -1,4 +1,9 @@
 # Copyright (c) Microsoft. All rights reserved.
+import os
+script_dir = os.path.dirname(os.path.abspath(__file__))
+os.chdir(script_dir)
+
+from dotenv import load_dotenv
 
 import asyncio
 
@@ -29,9 +34,13 @@ USER_INPUTS = [
 
 
 async def main():
+    load_dotenv()
+
+    deployment_name = os.getenv("AZURE_OPENAI_DEPLOYMENT_NAME")
+
     # 1. Create the instance of the Kernel to register an AI service
     kernel = Kernel()
-    kernel.add_service(AzureChatCompletion())
+    kernel.add_service(AzureChatCompletion(deployment_name=deployment_name))
 
     # 2. Create the agent
     agent = ChatCompletionAgent(

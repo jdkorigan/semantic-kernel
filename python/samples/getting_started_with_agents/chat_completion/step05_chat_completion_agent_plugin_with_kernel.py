@@ -1,4 +1,9 @@
 # Copyright (c) Microsoft. All rights reserved.
+import os
+script_dir = os.path.dirname(os.path.abspath(__file__))
+os.chdir(script_dir)
+
+from dotenv import load_dotenv
 
 import asyncio
 from typing import Annotated
@@ -49,11 +54,15 @@ USER_INPUTS = [
 
 
 async def main():
+    load_dotenv()
+
+    deployment_name = os.getenv("AZURE_OPENAI_DEPLOYMENT_NAME")
+
     # 1. Create the instance of the Kernel to register the plugin and service
     service_id = "agent"
-    kernel = Kernel()
+    kernel = Kernel()   
     kernel.add_plugin(MenuPlugin(), plugin_name="menu")
-    kernel.add_service(AzureChatCompletion(service_id=service_id))
+    kernel.add_service(AzureChatCompletion(service_id=service_id, deployment_name=deployment_name))
 
     # 2. Configure the function choice behavior to auto invoke kernel functions
     # so that the agent can automatically execute the menu plugin functions when needed
