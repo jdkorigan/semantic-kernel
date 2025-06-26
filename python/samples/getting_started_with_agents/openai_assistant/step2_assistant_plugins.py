@@ -1,4 +1,10 @@
 # Copyright (c) Microsoft. All rights reserved.
+import os
+script_dir = os.path.dirname(os.path.abspath(__file__))
+os.chdir(script_dir)
+
+from dotenv import load_dotenv
+
 import asyncio
 from typing import Annotated
 
@@ -43,12 +49,16 @@ USER_INPUTS = [
 
 
 async def main():
+    load_dotenv()
+
+    deployment_name = os.getenv("AZURE_OPENAI_DEPLOYMENT_NAME")
+
     # 1. Create the client using Azure OpenAI resources and configuration
-    client, model = AzureAssistantAgent.setup_resources()
+    client = AzureAssistantAgent.create_client(deployment_name=deployment_name)
 
     # 2. Create the assistant on the Azure OpenAI service
     definition = await client.beta.assistants.create(
-        model=model,
+        model=deployment_name,
         instructions="Answer questions about the menu.",
         name="Host",
     )

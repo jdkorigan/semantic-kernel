@@ -1,11 +1,16 @@
 # Copyright (c) Microsoft. All rights reserved.
 import asyncio
+import os
+script_dir = os.path.dirname(os.path.abspath(__file__))
+os.chdir(script_dir)
+
+from dotenv import load_dotenv
 
 from semantic_kernel.agents import AssistantAgentThread, AzureAssistantAgent
 
 """
 The following sample demonstrates how to create an OpenAI assistant using either
-Azure OpenAI or OpenAI. The sample shows how to have the assistant answrer
+Azure OpenAI or OpenAI. The sample shows how to have the assistant answer
 questions about the world.
 
 The interaction with the agent is via the `get_response` method, which sends a
@@ -24,12 +29,16 @@ USER_INPUTS = [
 
 
 async def main():
+    load_dotenv()
+
+    deployment_name = os.getenv("AZURE_OPENAI_DEPLOYMENT_NAME")
+    
     # 1. Create the client using Azure OpenAI resources and configuration
-    client, model = AzureAssistantAgent.setup_resources()
+    client = AzureAssistantAgent.create_client(deployment_name=deployment_name)
 
     # 2. Create the assistant on the Azure OpenAI service
     definition = await client.beta.assistants.create(
-        model=model,
+        model=deployment_name,
         instructions="Answer questions about the world in one sentence.",
         name="Assistant",
     )
@@ -50,21 +59,23 @@ async def main():
             print(f"# User: '{user_input}'")
             # 6. Invoke the agent for the current thread and print the response
             response = await agent.get_response(messages=user_input, thread=thread)
-            print(f"# {response.name}: {response}")
+            print(f"# {response.message.role}: {response.message.content}")
             thread = response.thread
     finally:
         # 7. Clean up the resources
-        await thread.delete() if thread else None
-        await agent.client.beta.assistants.delete(assistant_id=agent.id)
+        if thread:
+            await thread.delete()
+        if agent.id:
+            await agent.client.beta.assistants.delete(assistant_id=agent.id)
 
     """
     You should see output similar to the following:
 
     # User: 'Why is the sky blue?'
-    # Agent: The sky appears blue because molecules in the atmosphere scatter sunlight in all directions, and blue
+    # assistant: The sky appears blue because molecules in the atmosphere scatter sunlight in all directions, and blue
         light is scattered more than other colors because it travels in shorter, smaller waves.
     # User: 'What is the speed of light?'
-    # Agent: The speed of light in a vacuum is approximately 299,792,458 meters per second
+    # assistant: The speed of light in a vacuum is approximately 299,792,458 meters per second
         (about 186,282 miles per second).
      """
 

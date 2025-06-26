@@ -1,5 +1,11 @@
 # Copyright (c) Microsoft. All rights reserved.
 
+import os
+script_dir = os.path.dirname(os.path.abspath(__file__))
+os.chdir(script_dir)
+
+from dotenv import load_dotenv
+
 import asyncio
 import os
 
@@ -15,9 +21,14 @@ and answer questions about them. This sample uses non-streaming responses.
 
 
 async def main():
+    load_dotenv()
+
+    deployment_name = os.getenv("OPENAI_DEPLOYMENT_NAME")
+    api_key = os.getenv("OPENAI_API_KEY")
+
     # 1. Create the OpenAI Assistant Agent client
     # Note Azure OpenAI doesn't support vision files yet
-    client, model = OpenAIAssistantAgent.setup_resources()
+    client = OpenAIAssistantAgent.create_client(ai_model_id=deployment_name, api_key=api_key)
 
     # 2. Load a sample image of a cat used for the assistant to describe
     file_path = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))), "resources", "cat.jpg")
@@ -27,7 +38,7 @@ async def main():
 
     # 3. Create the assistant on the OpenAI service
     definition = await client.beta.assistants.create(
-        model=model,
+        model=deployment_name,
         instructions="Answer questions about the provided images.",
         name="Vision",
     )

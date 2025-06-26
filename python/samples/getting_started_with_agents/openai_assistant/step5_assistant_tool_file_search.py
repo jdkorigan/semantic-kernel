@@ -1,5 +1,11 @@
 # Copyright (c) Microsoft. All rights reserved.
 
+import os
+script_dir = os.path.dirname(os.path.abspath(__file__))
+os.chdir(script_dir)
+
+from dotenv import load_dotenv
+
 import asyncio
 import os
 
@@ -20,8 +26,12 @@ USER_INPUTS = {
 
 
 async def main():
+    load_dotenv()
+
+    deployment_name = os.getenv("AZURE_OPENAI_DEPLOYMENT_NAME")
+
     # 1. Create the client using Azure OpenAI resources and configuration
-    client, model = AzureAssistantAgent.setup_resources()
+    client = AzureAssistantAgent.create_client(deployment_name=deployment_name)
 
     # 2. Read and upload the file to the Azure OpenAI assistant service
     pdf_file_path = os.path.join(
@@ -41,7 +51,7 @@ async def main():
 
     # 4. Create the assistant on the Azure OpenAI service with the file search tool
     definition = await client.beta.assistants.create(
-        model=model,
+        model=deployment_name,
         instructions="Find answers to the user's questions in the provided file.",
         name="FileSearch",
         tools=file_search_tool,
@@ -70,7 +80,7 @@ async def main():
         # 9. Clean up the resources
         await client.files.delete(file.id)
         await client.vector_stores.delete(vector_store.id)
-        await client.beta.threads.delete(thread.id)
+        await thread.delete() if thread else None
         await client.beta.assistants.delete(agent.id)
 
 

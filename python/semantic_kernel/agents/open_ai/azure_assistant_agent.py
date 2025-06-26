@@ -20,6 +20,31 @@ class AzureAssistantAgent(OpenAIAssistantAgent):
     """An Azure Assistant Agent class that extends the OpenAI Assistant Agent class."""
 
     @staticmethod
+    def create_client(
+        *,
+        deployment_name: str | None = None,
+        **kwargs: Any,
+    ) -> AsyncAzureOpenAI:
+        """Create the Azure OpenAI client.
+        
+        This is a simplified version of setup_resources that returns only the client.
+        
+        Args:
+            deployment_name: The deployment name to use
+            **kwargs: Additional arguments passed to setup_resources
+            
+        Returns:
+            AsyncAzureOpenAI: The Azure OpenAI client instance
+        """
+        # If deployment_name is not provided, try to get it from environment
+        if deployment_name is None:
+            import os
+            deployment_name = os.getenv("AZURE_OPENAI_DEPLOYMENT_NAME")
+        
+        client, _ = AzureAssistantAgent.setup_resources(deployment_name=deployment_name, **kwargs)
+        return client
+
+    @staticmethod
     def setup_resources(
         *,
         ad_token: str | None = None,
