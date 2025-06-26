@@ -1,5 +1,11 @@
 # Copyright (c) Microsoft. All rights reserved.
 
+import os
+script_dir = os.path.dirname(os.path.abspath(__file__))
+os.chdir(script_dir)
+
+from dotenv import load_dotenv
+
 import asyncio
 import logging
 
@@ -21,7 +27,7 @@ logging.basicConfig(level=logging.WARNING)  # Set default level to WARNING
 logging.getLogger("semantic_kernel.agents.orchestration.sequential").setLevel(logging.DEBUG)
 
 
-def get_agents() -> list[Agent]:
+def get_agents(deployment_name: str) -> list[Agent]:
     """Return a list of agents that will participate in the sequential orchestration.
 
     Feel free to add or remove agents.
@@ -34,7 +40,7 @@ def get_agents() -> list[Agent]:
             "- Target audience\n"
             "- Unique selling points\n\n"
         ),
-        service=AzureChatCompletion(),
+        service=AzureChatCompletion(deployment_name=deployment_name),
     )
     writer_agent = ChatCompletionAgent(
         name="WriterAgent",
@@ -43,7 +49,7 @@ def get_agents() -> list[Agent]:
             "compose a compelling marketing copy (like a newsletter section) that highlights these points. "
             "Output should be short (around 150 words), output just the copy as a single text block."
         ),
-        service=AzureChatCompletion(),
+        service=AzureChatCompletion(deployment_name=deployment_name),
     )
     format_proof_agent = ChatCompletionAgent(
         name="FormatProofAgent",
@@ -51,7 +57,7 @@ def get_agents() -> list[Agent]:
             "You are an editor. Given the draft copy, correct grammar, improve clarity, ensure consistent tone, "
             "give format and make it polished. Output the final improved copy as a single text block."
         ),
-        service=AzureChatCompletion(),
+        service=AzureChatCompletion(deployment_name=deployment_name),
     )
 
     # The order of the agents in the list will be the order in which they are executed
@@ -59,9 +65,13 @@ def get_agents() -> list[Agent]:
 
 
 async def main():
+    load_dotenv()
+
+    deployment_name = os.getenv("AZURE_OPENAI_DEPLOYMENT_NAME")
+
     """Main function to run the agents."""
     # 1. Create a sequential orchestration with multiple agents
-    agents = get_agents()
+    agents = get_agents(deployment_name)
     sequential_orchestration = SequentialOrchestration(members=agents)
 
     # 2. Create a runtime and start it

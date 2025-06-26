@@ -1,6 +1,11 @@
 # Copyright (c) Microsoft. All rights reserved.
 
 import asyncio
+import os
+script_dir = os.path.dirname(os.path.abspath(__file__))
+os.chdir(script_dir)
+
+from dotenv import load_dotenv
 
 from semantic_kernel.agents import Agent, ChatCompletionAgent, HandoffOrchestration, OrchestrationHandoffs
 from semantic_kernel.agents.runtime import InProcessRuntime
@@ -52,7 +57,7 @@ class OrderReturnPlugin:
         return f"Return for order {order_id} has been processed successfully."
 
 
-def get_agents() -> tuple[list[Agent], OrchestrationHandoffs]:
+def get_agents(deployment_name: str) -> tuple[list[Agent], OrchestrationHandoffs]:
     """Return a list of agents that will participate in the Handoff orchestration and the handoff relationships.
 
     Feel free to add or remove agents and handoff connections.
@@ -61,14 +66,14 @@ def get_agents() -> tuple[list[Agent], OrchestrationHandoffs]:
         name="TriageAgent",
         description="A customer support agent that triages issues.",
         instructions="Handle customer requests.",
-        service=OpenAIChatCompletion(),
+        service=OpenAIChatCompletion(ai_model_id=deployment_name),
     )
 
     refund_agent = ChatCompletionAgent(
         name="RefundAgent",
         description="A customer support agent that handles refunds.",
         instructions="Handle refund requests.",
-        service=OpenAIChatCompletion(),
+        service=OpenAIChatCompletion(ai_model_id=deployment_name),
         plugins=[OrderRefundPlugin()],
     )
 
@@ -76,7 +81,7 @@ def get_agents() -> tuple[list[Agent], OrchestrationHandoffs]:
         name="OrderStatusAgent",
         description="A customer support agent that checks order status.",
         instructions="Handle order status requests.",
-        service=OpenAIChatCompletion(),
+        service=OpenAIChatCompletion(ai_model_id=deployment_name),
         plugins=[OrderStatusPlugin()],
     )
 
@@ -84,7 +89,7 @@ def get_agents() -> tuple[list[Agent], OrchestrationHandoffs]:
         name="OrderReturnAgent",
         description="A customer support agent that handles order returns.",
         instructions="Handle order return requests.",
-        service=OpenAIChatCompletion(),
+        service=OpenAIChatCompletion(ai_model_id=deployment_name),
         plugins=[OrderReturnPlugin()],
     )
 
@@ -131,9 +136,13 @@ def human_response_function() -> ChatMessageContent:
 
 
 async def main():
+    load_dotenv()
+
+    deployment_name = os.getenv("AZURE_OPENAI_DEPLOYMENT_NAME")
+
     """Main function to run the agents."""
     # 1. Create a handoff orchestration with multiple agents
-    agents, handoffs = get_agents()
+    agents, handoffs = get_agents(deployment_name)
     handoff_orchestration = HandoffOrchestration(
         members=agents,
         handoffs=handoffs,

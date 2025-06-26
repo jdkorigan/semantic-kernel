@@ -1,5 +1,11 @@
 # Copyright (c) Microsoft. All rights reserved.
 
+import os
+script_dir = os.path.dirname(os.path.abspath(__file__))
+os.chdir(script_dir)
+
+from dotenv import load_dotenv
+
 import asyncio
 
 from semantic_kernel.agents import Agent, ChatCompletionAgent, GroupChatOrchestration, RoundRobinGroupChatManager
@@ -25,7 +31,7 @@ to refine a slogan for a new electric SUV.
 """
 
 
-def get_agents() -> list[Agent]:
+def get_agents(deployment_name: str) -> list[Agent]:
     """Return a list of agents that will participate in the group style discussion.
 
     Feel free to add or remove agents.
@@ -36,7 +42,7 @@ def get_agents() -> list[Agent]:
         instructions=(
             "You are an excellent content writer. You create new content and edit contents based on the feedback."
         ),
-        service=AzureChatCompletion(),
+        service=AzureChatCompletion(deployment_name=deployment_name),
     )
     reviewer = ChatCompletionAgent(
         name="Reviewer",
@@ -44,7 +50,7 @@ def get_agents() -> list[Agent]:
         instructions=(
             "You are an excellent content reviewer. You review the content and provide feedback to the writer."
         ),
-        service=AzureChatCompletion(),
+        service=AzureChatCompletion(deployment_name=deployment_name),
     )
 
     # The order of the agents in the list will be the order in which they will be picked by the round robin manager
@@ -57,9 +63,13 @@ def agent_response_callback(message: ChatMessageContent) -> None:
 
 
 async def main():
+    load_dotenv()
+
+    deployment_name = os.getenv("AZURE_OPENAI_DEPLOYMENT_NAME")
+
     """Main function to run the agents."""
     # 1. Create a group chat orchestration with a round robin manager
-    agents = get_agents()
+    agents = get_agents(deployment_name)
     group_chat_orchestration = GroupChatOrchestration(
         members=agents,
         # max_rounds is odd, so that the writer gets the last round

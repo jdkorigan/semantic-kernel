@@ -1,4 +1,9 @@
 # Copyright (c) Microsoft. All rights reserved.
+import os
+script_dir = os.path.dirname(os.path.abspath(__file__))
+os.chdir(script_dir)
+
+from dotenv import load_dotenv
 
 import asyncio
 
@@ -16,29 +21,33 @@ waiting for the results.
 """
 
 
-def get_agents() -> list[Agent]:
+def get_agents(deployment_name: str) -> list[Agent]:
     """Return a list of agents that will participate in the concurrent orchestration.
 
     Feel free to add or remove agents.
-    """
+    """ 
     physics_agent = ChatCompletionAgent(
         name="PhysicsExpert",
         instructions="You are an expert in physics. You answer questions from a physics perspective.",
-        service=AzureChatCompletion(),
+        service=AzureChatCompletion(deployment_name=deployment_name),
     )
     chemistry_agent = ChatCompletionAgent(
         name="ChemistryExpert",
         instructions="You are an expert in chemistry. You answer questions from a chemistry perspective.",
-        service=AzureChatCompletion(),
+        service=AzureChatCompletion(deployment_name=deployment_name ),
     )
 
     return [physics_agent, chemistry_agent]
 
 
 async def main():
+    load_dotenv()
+
+    deployment_name = os.getenv("AZURE_OPENAI_DEPLOYMENT_NAME")
+
     """Main function to run the agents."""
     # 1. Create a concurrent orchestration with multiple agents
-    agents = get_agents()
+    agents = get_agents(deployment_name)
     concurrent_orchestration = ConcurrentOrchestration(members=agents)
 
     # 2. Create a runtime and start it

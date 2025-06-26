@@ -1,4 +1,9 @@
 # Copyright (c) Microsoft. All rights reserved.
+import os
+script_dir = os.path.dirname(os.path.abspath(__file__))
+os.chdir(script_dir)
+
+from dotenv import load_dotenv
 
 import asyncio
 import sys
@@ -304,6 +309,10 @@ def agent_response_callback(message: ChatMessageContent) -> None:
 
 
 async def main():
+    load_dotenv()
+
+    deployment_name = os.getenv("AZURE_OPENAI_DEPLOYMENT_NAME")
+
     """Main function to run the agents."""
     # 1. Create a group chat orchestration with the custom group chat manager
     agents = get_agents()
@@ -311,7 +320,7 @@ async def main():
         members=agents,
         manager=ChatCompletionGroupChatManager(
             topic="What does a good life mean to you personally?",
-            service=AzureChatCompletion(),
+            service=AzureChatCompletion(deployment_name=deployment_name),
             max_rounds=10,
         ),
         agent_response_callback=agent_response_callback,

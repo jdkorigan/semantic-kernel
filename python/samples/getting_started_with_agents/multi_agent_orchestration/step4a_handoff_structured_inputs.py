@@ -1,4 +1,9 @@
 # Copyright (c) Microsoft. All rights reserved.
+import os
+script_dir = os.path.dirname(os.path.abspath(__file__))
+os.chdir(script_dir)
+
+from dotenv import load_dotenv
 
 import asyncio
 from enum import Enum
@@ -68,7 +73,7 @@ class GithubPlugin:
         print(f"Creating plan for issue {issue_id} with tasks:\n{plan.model_dump_json(indent=2)}")
 
 
-def get_agents() -> tuple[list[Agent], OrchestrationHandoffs]:
+def get_agents(deployment_name: str) -> tuple[list[Agent], OrchestrationHandoffs]:
     """Return a list of agents that will participate in the Handoff orchestration and the handoff relationships.
 
     Feel free to add or remove agents and handoff connections.
@@ -77,20 +82,20 @@ def get_agents() -> tuple[list[Agent], OrchestrationHandoffs]:
         name="TriageAgent",
         description="An agent that triages GitHub issues",
         instructions="Given a GitHub issue, triage it.",
-        service=OpenAIChatCompletion(),
+        service=OpenAIChatCompletion(ai_model_id=deployment_name),
     )
     python_agent = ChatCompletionAgent(
         name="PythonAgent",
         description="An agent that handles Python related issues",
         instructions="You are an agent that handles Python related GitHub issues.",
-        service=OpenAIChatCompletion(),
+        service=OpenAIChatCompletion(ai_model_id=deployment_name),
         plugins=[GithubPlugin()],
     )
     dotnet_agent = ChatCompletionAgent(
         name="DotNetAgent",
         description="An agent that handles .NET related issues",
         instructions="You are an agent that handles .NET related GitHub issues.",
-        service=OpenAIChatCompletion(),
+        service=OpenAIChatCompletion(ai_model_id=deployment_name),
         plugins=[GithubPlugin()],
     )
 
@@ -147,12 +152,16 @@ def custom_input_transform(input_message: GithubIssue) -> ChatMessageContent:
 
 
 async def main():
+    load_dotenv()
+
+    deployment_name = os.getenv("AZURE_OPENAI_DEPLOYMENT_NAME")
+
     """Main function to run the agents."""
     # 1. Create a handoff orchestration with multiple agents
     #    and a custom input transform.
     # To enable structured input, you must specify the input transform
     #   and the generic types for the orchestration,
-    agents, handoffs = get_agents()
+    agents, handoffs = get_agents(deployment_name)
     handoff_orchestration = HandoffOrchestration[GithubIssue, ChatMessageContent](
         members=agents,
         handoffs=handoffs,

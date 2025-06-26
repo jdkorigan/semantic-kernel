@@ -1,4 +1,9 @@
 # Copyright (c) Microsoft. All rights reserved.
+import os
+script_dir = os.path.dirname(os.path.abspath(__file__))
+os.chdir(script_dir)
+
+from dotenv import load_dotenv
 
 import asyncio
 import os
@@ -53,6 +58,10 @@ def get_agents() -> list[Agent]:
 
 
 async def main():
+    load_dotenv()
+
+    deployment_name = os.getenv("AZURE_OPENAI_DEPLOYMENT_NAME")
+
     """Main function to run the agents."""
     # 1. Create a concurrent orchestration with multiple agents
     #    and a structure output transform.
@@ -63,7 +72,7 @@ async def main():
     agents = get_agents()
     concurrent_orchestration = ConcurrentOrchestration[str, ArticleAnalysis](
         members=agents,
-        output_transform=structured_outputs_transform(ArticleAnalysis, AzureChatCompletion()),
+        output_transform=structured_outputs_transform(ArticleAnalysis, AzureChatCompletion(deployment_name=deployment_name)),
     )
 
     # 2. Read the task from a file
