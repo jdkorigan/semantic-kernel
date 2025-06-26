@@ -1,5 +1,11 @@
 # Copyright (c) Microsoft. All rights reserved.
 
+import os
+script_dir = os.path.dirname(os.path.abspath(__file__))
+os.chdir(script_dir)
+
+from dotenv import load_dotenv
+
 import asyncio
 import logging
 
@@ -29,9 +35,9 @@ class ApprovalTerminationStrategy(TerminationStrategy):
         return "approved" in history[-1].content.lower()
 
 
-def _create_kernel_with_chat_completion(service_id: str) -> Kernel:
+def _create_kernel_with_chat_completion(service_id: str, deployment_name: str) -> Kernel:
     kernel = Kernel()
-    kernel.add_service(AzureChatCompletion(service_id=service_id))
+    kernel.add_service(AzureChatCompletion(service_id=service_id, deployment_name=deployment_name))
     return kernel
 
 
@@ -57,16 +63,20 @@ TASK = "a slogan for a new line of electric cars."
 
 
 async def main():
+    load_dotenv()
+
+    deployment_name = os.getenv("AZURE_OPENAI_DEPLOYMENT_NAME")
+
     # 1. Create the reviewer agent based on the chat completion service
     agent_reviewer = ChatCompletionAgent(
-        kernel=_create_kernel_with_chat_completion("artdirector"),
+        kernel=_create_kernel_with_chat_completion("artdirector", deployment_name),
         name=REVIEWER_NAME,
         instructions=REVIEWER_INSTRUCTIONS,
     )
 
     # 2. Create the copywriter agent based on the chat completion service
     agent_writer = ChatCompletionAgent(
-        kernel=_create_kernel_with_chat_completion("copywriter"),
+        kernel=_create_kernel_with_chat_completion("copywriter", deployment_name),
         name=COPYWRITER_NAME,
         instructions=COPYWRITER_INSTRUCTIONS,
     )

@@ -1,5 +1,11 @@
 # Copyright (c) Microsoft. All rights reserved.
 
+import os
+script_dir = os.path.dirname(os.path.abspath(__file__))
+os.chdir(script_dir)
+
+from dotenv import load_dotenv
+
 import asyncio
 
 from pydantic import BaseModel, ValidationError
@@ -18,9 +24,9 @@ of 70 or higher is provided.
 """
 
 
-def _create_kernel_with_chat_completion(service_id: str) -> Kernel:
+def _create_kernel_with_chat_completion(service_id: str, deployment_name: str) -> Kernel:
     kernel = Kernel()
-    kernel.add_service(OpenAIChatCompletion(service_id=service_id))
+    kernel.add_service(OpenAIChatCompletion(service_id=service_id, ai_model_id=deployment_name))
     return kernel
 
 
@@ -58,9 +64,13 @@ USER_INPUTS = {
 
 
 async def main():
+    load_dotenv()
+
+    deployment_name = os.getenv("AZURE_OPENAI_DEPLOYMENT_NAME")
+
     # 1. Create the instance of the Kernel to register a service
     service_id = "agent"
-    kernel = _create_kernel_with_chat_completion(service_id)
+    kernel = _create_kernel_with_chat_completion(service_id, deployment_name)
 
     # 2. Configure the prompt execution settings to return the score in the desired format
     settings = kernel.get_prompt_execution_settings_from_service_id(service_id)

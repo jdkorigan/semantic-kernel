@@ -1,5 +1,11 @@
 # Copyright (c) Microsoft. All rights reserved.
 
+import os
+script_dir = os.path.dirname(os.path.abspath(__file__))
+os.chdir(script_dir)
+
+from dotenv import load_dotenv
+
 import asyncio
 from typing import Annotated
 
@@ -61,6 +67,10 @@ USER_INPUTS = [
 
 
 async def main():
+    load_dotenv()
+
+    deployment_name = os.getenv("AZURE_OPENAI_DEPLOYMENT_NAME")
+
     # 4. Create a Kernel and add the plugin
     # For declarative agents, the kernel is required to resolve the plugin
     kernel = Kernel()
@@ -68,7 +78,7 @@ async def main():
 
     # 5. Create the agent from YAML + inject the AI service
     agent: ChatCompletionAgent = await AgentRegistry.create_from_yaml(
-        AGENT_YAML, kernel=kernel, service=OpenAIChatCompletion()
+        AGENT_YAML, kernel=kernel, service=OpenAIChatCompletion(ai_model_id=deployment_name)
     )
 
     # 6. Create a thread to hold the conversation
