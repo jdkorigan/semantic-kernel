@@ -1,0 +1,26 @@
+# Azure AI Agent Configuration
+# Copy this content to a .env file and fill in your actual values
+
+# Required: Azure AI Agent Model Deployment Name
+# This should be the name of your model deployment in Azure AI Services
+AZURE_AI_AGENT_MODEL_DEPLOYMENT_NAME=your-model-deployment-name
+
+# Required: Azure AI Project Connection String
+# This is the connection string for your Azure AI Project
+AZURE_AI_AGENT_PROJECT_CONNECTION_STRING=your-project-connection-string
+
+# Optional: Additional Azure AI Agent settings
+AZURE_AI_AGENT_ENDPOINT=your-endpoint
+AZURE_AI_AGENT_SUBSCRIPTION_ID=your-subscription-id
+AZURE_AI_AGENT_RESOURCE_GROUP_NAME=your-resource-group
+AZURE_AI_AGENT_PROJECT_NAME=your-project-name
+
+# Optional: Tool-specific settings
+AZURE_AI_AGENT_BING_CONNECTION_ID=your-bing-connection-id
+AZURE_AI_AGENT_AZURE_AI_SEARCH_CONNECTION_ID=your-azure-ai-search-connection-id
+AZURE_AI_AGENT_AZURE_AI_SEARCH_INDEX_NAME=your-azure-ai-search-index-name
+
+# Note: Do not include quotes around the values
+# Example:
+# AZURE_AI_AGENT_MODEL_DEPLOYMENT_NAME=gpt-4o
+# AZURE_AI_AGENT_PROJECT_CONNECTION_STRING=your-actual-connection-string 

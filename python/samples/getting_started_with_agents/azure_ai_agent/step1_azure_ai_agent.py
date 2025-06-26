@@ -1,9 +1,16 @@
 # Copyright (c) Microsoft. All rights reserved.
+#from dotenv import load_dotenv
+#load_dotenv()
 
+import os
 import asyncio
+from typing import Optional
+import re
+
+script_dir = os.path.dirname(os.path.abspath(__file__))
+os.chdir(script_dir)
 
 from azure.identity.aio import DefaultAzureCredential
-
 from semantic_kernel.agents import AzureAIAgent, AzureAIAgentSettings, AzureAIAgentThread
 
 """
@@ -16,8 +23,11 @@ user input to the agent and receives a response from the agent. The conversation
 history is maintained by the agent service, i.e. the responses are automatically
 associated with the thread. Therefore, client code does not need to maintain the
 conversation history.
-"""
 
+Required Environment Variables:
+- AZURE_AI_AGENT_MODEL_DEPLOYMENT_NAME: The model deployment name for the agent
+- AZURE_AI_AGENT_PROJECT_CONNECTION_STRING: The Azure AI Project connection string
+"""
 
 # Simulate a conversation with the agent
 USER_INPUTS = [
@@ -27,51 +37,62 @@ USER_INPUTS = [
 ]
 
 
+
 async def main() -> None:
-    async with (
-        DefaultAzureCredential() as creds,
-        AzureAIAgent.create_client(credential=creds) as client,
-    ):
-        # 1. Create an agent on the Azure AI agent service
-        agent_definition = await client.agents.create_agent(
-            model=AzureAIAgentSettings().model_deployment_name,
-            name="Assistant",
-            instructions="Answer the user's questions.",
-        )
+    """Main function to demonstrate Azure AI Agent usage with step-by-step validation."""
+    try:
+        settings = AzureAIAgentSettings()
 
-        # 2. Create a Semantic Kernel agent for the Azure AI agent
-        agent = AzureAIAgent(
-            client=client,
-            definition=agent_definition,
-        )
+        async with (
+            DefaultAzureCredential() as creds,
+            AzureAIAgent.create_client(credential=creds) as client,
+        ):
+            # 5. Create an agent on the Azure AI agent service
+            agent_definition = await client.agents.create_agent(
+                model=settings.model_deployment_name,
+                name="Assistant",
+                description="A helpful assistant that answers user questions.",
+                instructions="Answer the user's questions in a helpful and friendly manner.",
+            )
 
-        # 3. Create a thread for the agent
-        # If no thread is provided, a new thread will be
-        # created and returned with the initial response
-        thread: AzureAIAgentThread = None
+            # 6. Create a Semantic Kernel agent for the Azure AI agent
+            agent = AzureAIAgent(
+                client=client,
+                definition=agent_definition,
+            )
 
-        try:
-            for user_input in USER_INPUTS:
+            # 7. Create a thread for the agent
+            thread: Optional[AzureAIAgentThread] = None
+
+            for i, user_input in enumerate(USER_INPUTS, 1):
+                print(f"\n--- Conversation Turn {i} ---")
                 print(f"# User: {user_input}")
-                # 4. Invoke the agent with the specified message for response
                 response = await agent.get_response(messages=user_input, thread=thread)
-                print(f"# {response.name}: {response}")
+                print(f"# {response.message.role}: {response.message.content}")
                 thread = response.thread
-        finally:
-            # 6. Cleanup: Delete the thread and agent
-            await thread.delete() if thread else None
+
+            # 8. Cleanup: Delete the thread and agent
+            if thread:
+                await thread.delete()
             await client.agents.delete_agent(agent.id)
 
         """
         Sample Output:
+        --- Conversation Turn 1 ---
         # User: Hello, I am John Doe.
-        # Assistant: Hello, John! How can I assist you today?
+        # assistant: Hello, John! How can I assist you today?
+        
+        --- Conversation Turn 2 ---
         # User: What is your name?
-        # Assistant: I'm here as your assistant, so you can just call me Assistant. How can I help you today?
+        # assistant: I'm here as your assistant, so you can just call me Assistant. How can I help you today?
+        
+        --- Conversation Turn 3 ---
         # User: What is my name?
-        # Assistant: Your name is John Doe. How can I assist you today, John?
+        # assistant: Your name is John Doe. How can I assist you today, John?
         """
 
+    except Exception as e:
+        print(f"[FATAL ERROR] {e}")
 
 if __name__ == "__main__":
     asyncio.run(main())
